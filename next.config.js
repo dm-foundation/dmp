@@ -3,6 +3,16 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname:
+          "**.ipfs.localhost",
+        port: "8080",
+      },
+    ],
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

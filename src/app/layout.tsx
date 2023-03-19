@@ -10,6 +10,7 @@ import {
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import "./globals.css";
 
 // Configure chains & providers with the Alchemy provider.
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
@@ -49,6 +50,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log(children);
   return (
     <html lang="en">
       <body>
