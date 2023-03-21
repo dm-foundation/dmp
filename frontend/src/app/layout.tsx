@@ -1,6 +1,6 @@
 "use client";
 import { WagmiConfig, createClient, configureChains } from "wagmi";
-import { mainnet, optimism, arbitrum } from "wagmi/chains";
+import { mainnet, optimism, arbitrum, hardhat } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 import {
   ConnectKitProvider,
@@ -15,7 +15,7 @@ import "./globals.css";
 // Configure chains & providers with the Alchemy provider.
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, provider, webSocketProvider } = configureChains(
-  [mainnet, optimism, arbitrum],
+  [mainnet, optimism, arbitrum, hardhat],
   [publicProvider()]
 );
 

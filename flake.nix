@@ -24,14 +24,23 @@
           foundry.overlay
         ];
       };
+      run-script = pkgs.writeShellScriptBin "run" ''
+        # start the frontend
+        cd $ROOT/frontend
+        ${pkgs.nodePackages.pnpm}/bin/pnpm dev &
+
+        # start the blockchain
+        ${pkgs.foundry-bin}/bin/anvil &
+        wait
+      '';
     in {
       devShell = with pkgs;
         mkShell {
           buildInputs = [
+            run-script
             # smart contracct dependencies
             foundry-bin
             solc
-
             # frontend dependencies
             nodejs_latest
             nodePackages.pnpm
@@ -44,6 +53,7 @@
           # Decorative prompt override so we know when we're in a dev shell
           shellHook = ''
             export PS1="[dev] $PS1"
+            export ROOT=$(pwd)
           '';
         };
     });
