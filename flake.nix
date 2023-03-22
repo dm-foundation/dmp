@@ -25,13 +25,7 @@
         ];
       };
       run-script = pkgs.writeShellScriptBin "run" ''
-        # start the frontend
-        cd $ROOT/frontend
-        ${pkgs.nodePackages.pnpm}/bin/pnpm dev &
-
-        # start the blockchain
-        ${pkgs.foundry-bin}/bin/anvil &
-        wait
+        ${pkgs.nodejs_latest}/bin/node $ROOT/frontend/script/run.js
       '';
     in {
       devShell = with pkgs;
@@ -54,6 +48,7 @@
           shellHook = ''
             export PS1="[dev] $PS1"
             export ROOT=$(pwd)
+            export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
           '';
         };
     });
