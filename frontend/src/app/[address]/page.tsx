@@ -6,7 +6,7 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export default function Page({ params }: { params: { address: string } }) {
   const rootHash =
-    "bafyreigi6k3a3ofqqdrsuyrzer5kn3kv5q72x5xmoyuyddomdwtkgoxf3e";
+    "bafyreidscpglkovhhih4tesnxhmpxicgro6jtyz64em34p3tnxx4ifpo7q";
 
   const { data, error, isLoading } = useSWR(
     `http://${rootHash}.ipfs.localhost:8080/?format=dag-json`,
@@ -31,6 +31,8 @@ export default function Page({ params }: { params: { address: string } }) {
                 height={500}
                 unoptimized
               />
+              <p>{item.description}</p>
+              <p>Price: {item.price}</p>
             </div>
           );
         })}

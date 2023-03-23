@@ -9,6 +9,7 @@ const storeData = listings.listings.map(async (listing) => {
   const file = await fs.readFile(`./fixtures/${listing.picture}`);
   const fileCid = await client.add(file);
   return {
+    price: Math.trunc(Math.random(100) * 100),
     description: listing.description,
     picture: fileCid.cid,
   };
