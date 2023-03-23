@@ -33,6 +33,7 @@
           buildInputs = [
             run-script
             # smart contracct dependencies
+            kubo
             foundry-bin
             solc
             # frontend dependencies
