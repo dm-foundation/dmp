@@ -23,12 +23,13 @@ contract Store is ERC721 {
         baseURI = _baseURI;
     }
 
-    function mintTo(address recipient, bytes32 name) public payable returns (bytes32) {
+    function mintTo(address recipient, string calldata name) public payable returns (uint256) {
         if (msg.value != MINT_PRICE) {
             revert MintPriceNotPaid();
         }
-        _safeMint(recipient, uint256(name));
-        return name;
+        uint256 label = uint256(keccak256(bytes(name)));
+        _safeMint(recipient, label);
+        return label;
     }
 
     function tokenURI(uint256 tokenId)

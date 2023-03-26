@@ -9,37 +9,25 @@ contract StoreTest is Test {
 
     Store private store;
 
-    // helper function
-    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
-        bytes memory tempEmptyStringTest = bytes(source);
-        if (tempEmptyStringTest.length == 0) {
-            return 0x0;
-        }
-
-        assembly {
-            result := mload(add(source, 32))
-        }
-    }
-
     function setUp() public {
         // Deploy NFT contract
         store = new Store("NFT_tutorial", "TUT", "baseUri");
     }
 
     function testFailNoMintPricePaid() public {
-        store.mintTo(address(1), stringToBytes32("test"));
+        store.mintTo(address(1), "test");
     }
 
     function testMintPricePaid() public {
-        store.mintTo{value: 0.08 ether}(address(1), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(1), "test");
     }
 
     function testFailMintToZeroAddress() public {
-        store.mintTo{value: 0.08 ether}(address(0), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(0), "test");
     }
 
     function testNewMintOwnerRegistered() public {
-        store.mintTo{value: 0.08 ether}(address(1), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(1), "test");
         uint256 slotOfNewOwner = stdstore
             .target(address(store))
             .sig(store.ownerOf.selector)
@@ -55,7 +43,7 @@ contract StoreTest is Test {
     }
 
     function testBalanceIncremented() public {
-        store.mintTo{value: 0.08 ether}(address(1), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(1), "test");
         uint256 slotBalance = stdstore
             .target(address(store))
             .sig(store.balanceOf.selector)
@@ -67,7 +55,7 @@ contract StoreTest is Test {
         );
         assertEq(balanceFirstMint, 1);
 
-        store.mintTo{value: 0.08 ether}(address(1), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(1), "test");
         uint256 balanceSecondMint = uint256(
             vm.load(address(store), bytes32(slotBalance))
         );
@@ -76,7 +64,7 @@ contract StoreTest is Test {
 
     function testSafeContractReceiver() public {
         Receiver receiver = new Receiver();
-        store.mintTo{value: 0.08 ether}(address(receiver), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(receiver), "test");
         uint256 slotBalance = stdstore
             .target(address(store))
             .sig(store.balanceOf.selector)
@@ -89,7 +77,7 @@ contract StoreTest is Test {
 
     function testFailUnSafeContractReceiver() public {
         vm.etch(address(1), bytes("mock code"));
-        store.mintTo{value: 0.08 ether}(address(1), stringToBytes32("test"));
+        store.mintTo{value: 0.08 ether}(address(1), "test");
     }
 
     function testWithdrawalWorksAsOwner() public {
@@ -97,7 +85,7 @@ contract StoreTest is Test {
         Receiver receiver = new Receiver();
         address payable payee = payable(address(0x1337));
         uint256 priorPayeeBalance = payee.balance;
-        store.mintTo{value: store.MINT_PRICE()}(address(receiver), stringToBytes32("test"));
+        store.mintTo{value: store.MINT_PRICE()}(address(receiver), "test");
         // Check that the balance of the contract is correct
         assertEq(address(store).balance, store.MINT_PRICE());
         uint256 storeBalance = address(store).balance;
@@ -109,7 +97,7 @@ contract StoreTest is Test {
     function testWithdrawalFailsAsNotOwner() public {
         // Mint an NFT, sending eth to the contract
         Receiver receiver = new Receiver();
-        store.mintTo{value: store.MINT_PRICE()}(address(receiver), stringToBytes32("test"));
+        store.mintTo{value: store.MINT_PRICE()}(address(receiver), "test");
         // Check that the balance of the contract is correct
         assertEq(address(store).balance, store.MINT_PRICE());
         // Confirm that a non-owner cannot withdraw
