@@ -3,12 +3,14 @@ pragma solidity ^0.8.13;
 
 import "solmate/tokens/ERC721.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 error MintPriceNotPaid();
+error MaxSupply();
 error NonExistentTokenURI();
 error WithdrawTransfer();
 
-contract Store is ERC721 {
+contract Store is ERC721, Ownable {
 
     using Strings for uint256;
     string public baseURI;
@@ -27,7 +29,7 @@ contract Store is ERC721 {
         if (msg.value != MINT_PRICE) {
             revert MintPriceNotPaid();
         }
-        uint256 label = uint256(keccak256(bytes(name)));
+       uint256 label = uint256(keccak256(bytes(name)));
         _safeMint(recipient, label);
         return label;
     }
@@ -48,7 +50,7 @@ contract Store is ERC721 {
                 : "";
     }
 
-    function withdrawPayments(address payable payee) external {
+    function withdrawPayments(address payable payee) external onlyOwner {
         uint256 balance = address(this).balance;
         (bool transferTx, ) = payee.call{value: balance}("");
         if (!transferTx) {

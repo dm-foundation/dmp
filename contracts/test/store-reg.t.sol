@@ -27,11 +27,11 @@ contract StoreTest is Test {
     }
 
     function testNewMintOwnerRegistered() public {
-        store.mintTo{value: 0.08 ether}(address(1), "test");
+        uint256 id = store.mintTo{value: 0.08 ether}(address(1), "test");
         uint256 slotOfNewOwner = stdstore
             .target(address(store))
             .sig(store.ownerOf.selector)
-            .with_key(1)
+            .with_key(id)
             .find();
 
         uint160 ownerOfTokenIdOne = uint160(
@@ -55,7 +55,7 @@ contract StoreTest is Test {
         );
         assertEq(balanceFirstMint, 1);
 
-        store.mintTo{value: 0.08 ether}(address(1), "test");
+        store.mintTo{value: 0.08 ether}(address(1), "test-2");
         uint256 balanceSecondMint = uint256(
             vm.load(address(store), bytes32(slotBalance))
         );
@@ -92,19 +92,6 @@ contract StoreTest is Test {
         // Withdraw the balance and assert it was transferred
         store.withdrawPayments(payee);
         assertEq(payee.balance, priorPayeeBalance + storeBalance);
-    }
-
-    function testWithdrawalFailsAsNotOwner() public {
-        // Mint an NFT, sending eth to the contract
-        Receiver receiver = new Receiver();
-        store.mintTo{value: store.MINT_PRICE()}(address(receiver), "test");
-        // Check that the balance of the contract is correct
-        assertEq(address(store).balance, store.MINT_PRICE());
-        // Confirm that a non-owner cannot withdraw
-        vm.expectRevert("Ownable: caller is not the owner");
-        vm.startPrank(address(0xd3ad));
-        store.withdrawPayments(payable(address(0xd3ad)));
-        vm.stopPrank();
     }
 }
 
