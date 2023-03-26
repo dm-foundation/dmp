@@ -8,7 +8,7 @@ error MintPriceNotPaid();
 error NonExistentTokenURI();
 error WithdrawTransfer();
 
-contract NFT is ERC721 {
+contract Store is ERC721 {
 
     using Strings for uint256;
     string public baseURI;
@@ -23,13 +23,12 @@ contract NFT is ERC721 {
         baseURI = _baseURI;
     }
 
-    function mintTo(address recipient) public payable returns (uint256) {
+    function mintTo(address recipient, bytes32 name) public payable returns (bytes32) {
         if (msg.value != MINT_PRICE) {
             revert MintPriceNotPaid();
         }
-        uint256 newTokenId = ++currentTokenId;
-        _safeMint(recipient, newTokenId);
-        return newTokenId;
+        _safeMint(recipient, uint256(name));
+        return name;
     }
 
     function tokenURI(uint256 tokenId)

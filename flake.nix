@@ -3,7 +3,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
-    foundry.url = "github:shazow/foundry.nix/monthly"; # Use monthly branch for permanent releases
+    foundry.url = "github:shazow/foundry.nix"; # Use monthly branch for permanent releases
     muKnIOpkgs.url = "github:MuKnIO/nixpkgs/solc"; # solc in master is broken and out of date
   };
 
