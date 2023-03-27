@@ -56,8 +56,8 @@ export default function RootLayout({
       <body>
         <WagmiConfig client={client}>
           <ConnectKitProvider theme="minimal">
-            {children}
             <ConnectKitButton />
+            {children}
           </ConnectKitProvider>
         </WagmiConfig>
       </body>
