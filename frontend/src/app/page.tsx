@@ -8,7 +8,11 @@ import { useDebounce } from "usehooks-ts";
 export default function Page() {
   const [storeId, setStoreId] = React.useState("");
   const debouncedStoreId = useDebounce(storeId, 500);
-  const { config } = usePrepareContractWrite({
+  const {
+    config,
+    error: prepareError,
+    isError: isPrepareError,
+  } = usePrepareContractWrite({
     address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
     abi: storeABI.abi,
     functionName: "mintTo",
@@ -34,11 +38,8 @@ export default function Page() {
         <button disabled={!write || isLoading}>
           {isLoading ? "Minting..." : "Mint"}
         </button>
-        {isSuccess && (
-          <div>
-            Successfully minted your NFT!
-          </div>
-        )}
+        {isSuccess && <div>Successfully minted your NFT!</div>}
+        {isPrepareError && <div>Error: {(prepareError)?.message}</div>}
       </form>
     </div>
   );
