@@ -14,10 +14,6 @@ contract StoreTest is Test {
         store = new Store("NFT_tutorial", "TUT", "baseUri");
     }
 
-    function testFailNoMintPricePaid() public {
-        store.mintTo(address(1), "test");
-    }
-
     function testMintPricePaid() public {
         store.mintTo{value: 0.08 ether}(address(1), "test");
     }
@@ -78,20 +74,6 @@ contract StoreTest is Test {
     function testFailUnSafeContractReceiver() public {
         vm.etch(address(1), bytes("mock code"));
         store.mintTo{value: 0.08 ether}(address(1), "test");
-    }
-
-    function testWithdrawalWorksAsOwner() public {
-        // Mint an NFT, sending eth to the contract
-        Receiver receiver = new Receiver();
-        address payable payee = payable(address(0x1337));
-        uint256 priorPayeeBalance = payee.balance;
-        store.mintTo{value: store.MINT_PRICE()}(address(receiver), "test");
-        // Check that the balance of the contract is correct
-        assertEq(address(store).balance, store.MINT_PRICE());
-        uint256 storeBalance = address(store).balance;
-        // Withdraw the balance and assert it was transferred
-        store.withdrawPayments(payee);
-        assertEq(payee.balance, priorPayeeBalance + storeBalance);
     }
 }
 

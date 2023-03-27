@@ -5,7 +5,6 @@ import "solmate/tokens/ERC721.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-error MintPriceNotPaid();
 error MaxSupply();
 error NonExistentTokenURI();
 error WithdrawTransfer();
@@ -15,7 +14,6 @@ contract Store is ERC721, Ownable {
     using Strings for uint256;
     string public baseURI;
     uint256 public currentTokenId;
-    uint256 public constant MINT_PRICE = 0.08 ether;
 
     constructor(
         string memory _name,
@@ -26,9 +24,6 @@ contract Store is ERC721, Ownable {
     }
 
     function mintTo(address recipient, string calldata name) public payable returns (uint256) {
-        if (msg.value != MINT_PRICE) {
-            revert MintPriceNotPaid();
-        }
        uint256 label = uint256(keccak256(bytes(name)));
         _safeMint(recipient, label);
         return label;
