@@ -27,6 +27,9 @@ contract Store is ERC721, Ownable {
 
     function mintTo(address recipient, string calldata name) public returns (uint256) {
        uint256 tokenId = uint256(keccak256(bytes(name)));
+        if(_ownerOf[tokenId] != address(0)) {
+            revert NameAlreadyTaken();
+        }
         _safeMint(recipient, tokenId);
         return tokenId;
     }
