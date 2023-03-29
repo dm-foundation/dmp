@@ -26,8 +26,7 @@ export default function Page() {
         onSubmit={(e) => {
           e.preventDefault();
           write?.();
-        }}
-      >
+        }}>
         <input
           onChange={(e) => setStoreId(e.target.value)}
           id="storeName"
@@ -39,7 +38,7 @@ export default function Page() {
           {isLoading ? "Minting..." : "Mint"}
         </button>
         {isSuccess && <div>Successfully minted your NFT!</div>}
-        {isPrepareError && <div>Error: {(prepareError)?.message}</div>}
+        {isPrepareError && <div>Error: {prepareError?.message}</div>}
       </form>
     </div>
   );

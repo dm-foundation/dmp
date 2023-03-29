@@ -8,12 +8,14 @@ import "openzeppelin-contracts/contracts/access/Ownable.sol";
 error MaxSupply();
 error NonExistentTokenURI();
 error WithdrawTransfer();
+error NameAlreadyTaken();
 
 contract Store is ERC721, Ownable {
 
     using Strings for uint256;
     string public baseURI;
     uint256 public currentTokenId;
+    mapping(uint256 => bytes32) internal storeRootHash;
 
     constructor(
         string memory _name,
@@ -23,10 +25,22 @@ contract Store is ERC721, Ownable {
         baseURI = _baseURI;
     }
 
-    function mintTo(address recipient, string calldata name) public payable returns (uint256) {
-       uint256 label = uint256(keccak256(bytes(name)));
-        _safeMint(recipient, label);
-        return label;
+    function mintTo(address recipient, string calldata name) public returns (uint256) {
+       uint256 tokenId = uint256(keccak256(bytes(name)));
+        _safeMint(recipient, tokenId);
+        return tokenId;
+    }
+
+    function updateRootHash(uint256 id, bytes32 hash) public
+    {
+        address owner = _ownerOf[id];
+        require(
+            msg.sender == owner ||
+            isApprovedForAll[owner][msg.sender] ||
+            msg.sender == getApproved[id],
+            "NOT_AUTHORIZED"
+        );
+        storeRootHash[id] = hash;
     }
 
     function tokenURI(uint256 tokenId)
