@@ -16,7 +16,10 @@ const storeData = listings.listings.map(async (listing) => {
 });
 
 Promise.all(storeData).then(async (data) => {
-  const cid = await client.dag.put(data);
+  const cid = await client.dag.put({
+    promoting: [],
+    listings: data,
+  });
   const hexstr = Buffer.from(cid.multihash.digest).toString("hex");
   console.log(hexstr);
 });

@@ -77,7 +77,7 @@ contract StoreTest is Test {
     }
 }
 
-contract Receiver is ERC721TokenReceiver {
+contract Receiver is IERC721Receiver {
     function onERC721Received(
         address operator,
         address from,

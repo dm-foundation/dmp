@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "solmate/tokens/ERC721.sol";
+import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
@@ -10,7 +10,7 @@ error NonExistentTokenURI();
 error WithdrawTransfer();
 error NameAlreadyTaken();
 
-contract Store is ERC721, Ownable {
+contract Store is ERC721Enumerable, Ownable {
 
     using Strings for uint256;
     string public baseURI;
@@ -27,7 +27,7 @@ contract Store is ERC721, Ownable {
 
     function mintTo(address recipient, string calldata name) public returns (uint256) {
        uint256 tokenId = uint256(keccak256(bytes(name)));
-        if(_ownerOf[tokenId] != address(0)) {
+        if(_ownerOf(tokenId) != address(0)) {
             revert NameAlreadyTaken();
         }
         _safeMint(recipient, tokenId);
@@ -36,11 +36,11 @@ contract Store is ERC721, Ownable {
 
     function updateRootHash(uint256 id, bytes32 hash) public
     {
-        address owner = _ownerOf[id];
+        address owner = _ownerOf(id);
         require(
             msg.sender == owner ||
-            isApprovedForAll[owner][msg.sender] ||
-            msg.sender == getApproved[id],
+            isApprovedForAll(owner, msg.sender) ||
+            msg.sender == getApproved(id),
             "NOT_AUTHORIZED"
         );
         storeRootHash[id] = hash;
