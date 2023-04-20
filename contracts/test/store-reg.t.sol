@@ -11,11 +11,7 @@ contract StoreTest is Test {
 
     function setUp() public {
         // Deploy NFT contract
-        store = new Store("NFT_tutorial", "TUT", "baseUri");
-    }
-
-    function testMintPricePaid() public {
-        store.mintTo(address(1));
+        store = new Store("STORES", "TUT", "baseUri");
     }
 
     function testFailMintToZeroAddress() public {

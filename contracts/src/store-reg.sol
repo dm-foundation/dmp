@@ -11,13 +11,12 @@ error NonExistentTokenURI();
 error WithdrawTransfer();
 error NameAlreadyTaken();
 
-contract Store is ERC721Enumerable, Ownable {
+contract Store is ERC721Enumerable {
     using Counters for Counters.Counter;
     using Strings for uint256;
 
-    Counters.Counter private _tokenIds;
+    Counters.Counter private _tokenIdCounter;
     string public baseURI;
-    uint256 public currentTokenId;
     mapping(uint256 => bytes32) internal storeRootHash;
 
     constructor(
@@ -29,7 +28,8 @@ contract Store is ERC721Enumerable, Ownable {
     }
 
     function mintTo(address recipient) public returns (uint256) {
-        uint256 tokenId = _tokenIds.current();
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
         _safeMint(recipient, tokenId);
         return tokenId;
     }
@@ -44,29 +44,5 @@ contract Store is ERC721Enumerable, Ownable {
             "NOT_AUTHORIZED"
         );
         storeRootHash[id] = hash;
-    }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
-        if (ownerOf(tokenId) == address(0)) {
-            revert NonExistentTokenURI();
-        }
-        return
-            bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString()))
-                : "";
-    }
-
-    function withdrawPayments(address payable payee) external onlyOwner {
-        uint256 balance = address(this).balance;
-        (bool transferTx, ) = payee.call{value: balance}("");
-        if (!transferTx) {
-            revert WithdrawTransfer();
-        }
     }
 }

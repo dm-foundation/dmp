@@ -1,6 +1,7 @@
 "use client";
 import { WagmiConfig, createClient, configureChains } from "wagmi";
 import { mainnet, optimism, arbitrum, hardhat } from "wagmi/chains";
+import { ENS } from "@ensdomains/ensjs";
 import { publicProvider } from "wagmi/providers/public";
 import {
   ConnectKitProvider,
@@ -18,6 +19,15 @@ const { chains, provider, webSocketProvider } = configureChains(
   [mainnet, optimism, arbitrum, hardhat],
   [publicProvider()]
 );
+
+// to do; add ens integration
+const ENSInstance = new ENS();
+ENSInstance.setProvider(provider(mainnet)).then(async () => {
+  const profile = await ENSInstance.getProfile(
+    "0x51434F6502b6167ABEC98Ff9F5fd37Ef3E07E7d2"
+  );
+  console.log(profile);
+});
 
 const client = createClient(
   getDefaultClient({
