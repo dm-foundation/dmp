@@ -6,11 +6,6 @@ import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "openzeppelin-contracts/contracts/utils/Counters.sol";
 
-error MaxSupply();
-error NonExistentTokenURI();
-error WithdrawTransfer();
-error NameAlreadyTaken();
-
 contract Store is ERC721Enumerable {
     using Counters for Counters.Counter;
     using Strings for uint256;

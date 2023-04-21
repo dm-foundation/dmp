@@ -1,19 +1,23 @@
 "use client";
 
 import React from "react";
-import { usePrepareContractWrite, useContractWrite } from "wagmi";
+import { usePrepareContractWrite, useContractWrite, useAccount } from "wagmi";
 import storeABI from "../../../contracts/out/store-reg.sol/Store.json" assert { type: "json" };
+import depolyerTx from "../../../contracts/broadcast/store-reg.s.sol/31337/run-latest.json" assert { type: "json" };
 
 export default function Page() {
+  const { address, isConnecting, isDisconnected } = useAccount();
+
+  console.log(address);
   const {
     config,
     error: prepareError,
     isError: isPrepareError,
   } = usePrepareContractWrite({
-    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    address: depolyerTx.transactions[0].contractAddress,
     abi: storeABI.abi,
     functionName: "mintTo",
-    args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+    args: [address],
     enabled: true,
   });
   const { data, isLoading, isSuccess, write } = useContractWrite(config);
@@ -26,9 +30,9 @@ export default function Page() {
         }}
       >
         <button disabled={!write || isLoading}>
-          {isLoading ? "Minting..." : "Mint"}
+          {isDisconnected ? "connect to Minet" : (isLoading ? "Minting..." : "Mint") }
         </button>
-        {isSuccess && <div>Successfully minted your NFT!</div>}
+        {isSuccess && <div>Successfully minted your Store!</div>}
         {isPrepareError && <div>Error: {prepareError?.message}</div>}
       </form>
     </div>

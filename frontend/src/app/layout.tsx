@@ -1,6 +1,6 @@
 "use client";
 import { WagmiConfig, createClient, configureChains } from "wagmi";
-import { mainnet, optimism, arbitrum, hardhat } from "wagmi/chains";
+import {  optimism, arbitrum, hardhat } from "wagmi/chains";
 import { ENS } from "@ensdomains/ensjs";
 import { publicProvider } from "wagmi/providers/public";
 import {
@@ -16,18 +16,17 @@ import "./globals.css";
 // Configure chains & providers with the Alchemy provider.
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, provider, webSocketProvider } = configureChains(
-  [mainnet, optimism, arbitrum, hardhat],
+  [hardhat],
   [publicProvider()]
 );
 
 // to do; add ens integration
-const ENSInstance = new ENS();
-ENSInstance.setProvider(provider(mainnet)).then(async () => {
-  const profile = await ENSInstance.getProfile(
-    "0x51434F6502b6167ABEC98Ff9F5fd37Ef3E07E7d2"
-  );
-  console.log(profile);
-});
+// const ENSInstance = new ENS();
+// ENSInstance.setProvider(provider(mainnet)).then(async () => {
+//  const profile = await ENSInstance.getProfile(
+//    "0x51434F6502b6167ABEC98Ff9F5fd37Ef3E07E7d2"
+//  );
+// });
 
 const client = createClient(
   getDefaultClient({
@@ -60,7 +59,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log(children);
   return (
     <html lang="en">
       <body>
