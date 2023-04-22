@@ -8,7 +8,6 @@ import depolyerTx from "../../../contracts/broadcast/store-reg.s.sol/31337/run-l
 export default function Page() {
   const { address, isConnecting, isDisconnected } = useAccount();
 
-  console.log(address);
   const {
     config,
     error: prepareError,
@@ -30,7 +29,11 @@ export default function Page() {
         }}
       >
         <button disabled={!write || isLoading}>
-          {isDisconnected ? "connect to Minet" : (isLoading ? "Minting..." : "Mint") }
+          {isDisconnected
+            ? "connect to Minet"
+            : isLoading
+            ? "Minting..."
+            : "Mint"}
         </button>
         {isSuccess && <div>Successfully minted your Store!</div>}
         {isPrepareError && <div>Error: {prepareError?.message}</div>}
