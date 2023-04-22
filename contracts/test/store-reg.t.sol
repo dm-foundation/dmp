@@ -8,6 +8,7 @@ contract StoreTest is Test {
     using stdStorage for StdStorage;
 
     Store private store;
+    bytes32 testHash = 0x5049705e4c047d2cfeb1050cffe847c85a8dbd96e7f129a3a1007920d9c61d9a;
 
     function setUp() public {
         // Deploy NFT contract
@@ -15,11 +16,11 @@ contract StoreTest is Test {
     }
 
     function testFailMintToZeroAddress() public {
-        store.mintTo(address(0));
+        store.mintTo(address(0), testHash);
     }
 
     function testNewMintOwnerRegistered() public {
-        uint256 id = store.mintTo(address(1));
+        uint256 id = store.mintTo(address(1), testHash);
         uint256 slotOfNewOwner = stdstore
             .target(address(store))
             .sig(store.ownerOf.selector)
@@ -35,7 +36,7 @@ contract StoreTest is Test {
     }
 
     function testBalanceIncremented() public {
-        store.mintTo(address(1));
+        store.mintTo(address(1), testHash);
         uint256 slotBalance = stdstore
             .target(address(store))
             .sig(store.balanceOf.selector)
@@ -47,7 +48,7 @@ contract StoreTest is Test {
         );
         assertEq(balanceFirstMint, 1);
 
-        store.mintTo(address(1));
+        store.mintTo(address(1), testHash);
         uint256 balanceSecondMint = uint256(
             vm.load(address(store), bytes32(slotBalance))
         );
@@ -56,7 +57,7 @@ contract StoreTest is Test {
 
     function testSafeContractReceiver() public {
         Receiver receiver = new Receiver();
-        store.mintTo(address(receiver));
+        store.mintTo(address(receiver), testHash);
         uint256 slotBalance = stdstore
             .target(address(store))
             .sig(store.balanceOf.selector)
@@ -69,7 +70,7 @@ contract StoreTest is Test {
 
     function testFailUnSafeContractReceiver() public {
         vm.etch(address(1), bytes("mock code"));
-        store.mintTo(address(1));
+        store.mintTo(address(1), testHash);
     }
 }
 

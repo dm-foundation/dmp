@@ -22,11 +22,13 @@ contract Store is ERC721Enumerable {
         baseURI = _baseURI;
     }
 
-    function mintTo(address recipient) public returns (uint256) {
-        uint256 tokenId = _tokenIdCounter.current();
+    function mintTo(address recipient, bytes32 hash) public returns (uint256) {
+        uint256 id = _tokenIdCounter.current();
         _tokenIdCounter.increment();
-        _safeMint(recipient, tokenId);
-        return tokenId;
+        _safeMint(recipient, id);
+        // update the hash
+        storeRootHash[id] = hash;
+        return id;
     }
 
     function updateRootHash(uint256 id, bytes32 hash) public

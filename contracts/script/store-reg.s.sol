@@ -15,8 +15,7 @@ contract MyScript is Script {
         bytes32 rootHash = 0xf7da9dd69c40b660bedf17b0bafe9b16085e1bf34c6bc18655c5af3997aa5174;
         vm.startBroadcast(deployerPrivateKey);
         Store store = new Store("UAP", "UAP", "baseUri");
-        store_id =  store.mintTo(testAddress);
-        store.updateRootHash(store_id, rootHash);
+        store_id =  store.mintTo(testAddress, rootHash);
         vm.stopBroadcast();
     }
 }
