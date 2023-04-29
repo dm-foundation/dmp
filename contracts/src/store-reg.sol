@@ -12,7 +12,7 @@ contract Store is ERC721Enumerable {
 
     Counters.Counter private _tokenIdCounter;
     string public baseURI;
-    mapping(uint256 => bytes32) internal storeRootHash;
+    mapping(uint256 => bytes32) public storeRootHash;
 
     constructor(
         string memory _name,
@@ -22,12 +22,11 @@ contract Store is ERC721Enumerable {
         baseURI = _baseURI;
     }
 
-    function mintTo(address recipient, bytes32 hash) public returns (uint256) {
-        uint256 id = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+    function mintTo(address recipient, uint256 id, bytes32 rootHash) public returns (uint256) {
+        // safe mint checks id
         _safeMint(recipient, id);
         // update the hash
-        storeRootHash[id] = hash;
+        storeRootHash[id] = rootHash;
         return id;
     }
 

@@ -16,11 +16,11 @@ contract StoreTest is Test {
     }
 
     function testFailMintToZeroAddress() public {
-        store.mintTo(address(0), testHash);
+        store.mintTo(address(0), 0, testHash);
     }
 
     function testNewMintOwnerRegistered() public {
-        uint256 id = store.mintTo(address(1), testHash);
+        uint256 id = store.mintTo(address(1), 1, testHash);
         uint256 slotOfNewOwner = stdstore
             .target(address(store))
             .sig(store.ownerOf.selector)
@@ -36,7 +36,7 @@ contract StoreTest is Test {
     }
 
     function testBalanceIncremented() public {
-        store.mintTo(address(1), testHash);
+        store.mintTo(address(1), 2, testHash);
         uint256 slotBalance = stdstore
             .target(address(store))
             .sig(store.balanceOf.selector)
@@ -48,7 +48,7 @@ contract StoreTest is Test {
         );
         assertEq(balanceFirstMint, 1);
 
-        store.mintTo(address(1), testHash);
+        store.mintTo(address(1), 3, testHash);
         uint256 balanceSecondMint = uint256(
             vm.load(address(store), bytes32(slotBalance))
         );
@@ -57,7 +57,7 @@ contract StoreTest is Test {
 
     function testSafeContractReceiver() public {
         Receiver receiver = new Receiver();
-        store.mintTo(address(receiver), testHash);
+        store.mintTo(address(receiver), 4, testHash);
         uint256 slotBalance = stdstore
             .target(address(store))
             .sig(store.balanceOf.selector)
@@ -70,7 +70,7 @@ contract StoreTest is Test {
 
     function testFailUnSafeContractReceiver() public {
         vm.etch(address(1), bytes("mock code"));
-        store.mintTo(address(1), testHash);
+        store.mintTo(address(1), 5, testHash);
     }
 }
 
