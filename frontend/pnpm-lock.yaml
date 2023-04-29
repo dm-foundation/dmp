@@ -76,6 +76,9 @@ dependencies:
   typescript:
     specifier: 4.9.5
     version: 4.9.5
+  uap-frontend:
+    specifier: 'link:'
+    version: 'link:'
   usehooks-ts:
     specifier: ^2.9.1
     version: 2.9.1(react-dom@18.2.0)(react@18.2.0)

@@ -24,7 +24,7 @@ const client = createClient(
     appName: "ConnectKit Next.js demo",
     //infuraId: process.env.NEXT_PUBLIC_INFURA_ID,
     //alchemyId:  process.env.NEXT_PUBLIC_ALCHEMY_ID,
-    chains: [optimism, arbitrum, hardhat, mainnet],
+    chains: [ hardhat, mainnet],
   })
 );
 
@@ -40,8 +40,8 @@ export default function RootLayout({
         <WagmiConfig client={client}>
           <ConnectKitProvider>
             <ConnectKitButton />
-            {children}
           </ConnectKitProvider>
+          {children}
         </WagmiConfig>
       </body>
     </html>

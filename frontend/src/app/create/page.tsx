@@ -1,7 +1,9 @@
 "use client";
 import useSWR from "swr";
+import { useState } from "react";
 import Image from "next/image";
-import { usePrepareContractWrite, useContractWrite, useAccount } from "wagmi";
+import { usePrepareContractWrite, useAccount } from "wagmi";
+import { prepareWriteContract, writeContract } from "@wagmi/core";
 
 import { create } from "kubo-rpc-client";
 import storeABI from "../../../../contracts/out/store-reg.sol/Store.json" assert { type: "json" };
@@ -10,11 +12,11 @@ import depolyerTx from "../../../../contracts/broadcast/store-reg.s.sol/31337/ru
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 // connect to the default API address http://localhost:5001
 const kuboClient = create("http://127.0.0.1:5001");
+const rootHash = "bafyreidscpglkovhhih4tesnxhmpxicgro6jtyz64em34p3tnxx4ifpo7q";
 
 export default function Page({ params }: { params: { address: string } }) {
+  const [txState, setTxState] = useState(false);
   // ipfs
-  const rootHash =
-    "bafyreidscpglkovhhih4tesnxhmpxicgro6jtyz64em34p3tnxx4ifpo7q";
 
   const { data, error, isLoading } = useSWR(
     `http://${rootHash}.ipfs.localhost:8080/?format=dag-json`,
@@ -23,27 +25,6 @@ export default function Page({ params }: { params: { address: string } }) {
 
   // smart contract
   const { address, isConnectingContract, isDisconnected } = useAccount();
-
-  const {
-    config,
-    error: prepareError,
-    isError: isPrepareError,
-  } = usePrepareContractWrite({
-    address: depolyerTx.transactions[0].contractAddress,
-    abi: storeABI.abi,
-    functionName: "mintTo",
-    args: [
-      address,
-      "0x5049705e4c047d2cfeb1050cffe847c85a8dbd96e7f129a3a1007920d9c61d9a",
-    ],
-    enabled: true,
-  });
-
-  const { dataContract, isLoadingContract, isSuccess, write } =
-    useContractWrite(config);
-
-  if (error) return <div>failed to load</div>;
-  if (isLoading) return <div>loading...</div>;
 
   const handleSubmit = async (event) => {
     // Stop the form from submitting and refreshing the page.
@@ -68,8 +49,21 @@ export default function Page({ params }: { params: { address: string } }) {
     const hexstr = Buffer.from(cid.multihash.digest).toString("hex");
     console.log(hexstr);
 
-    // write?.();
+    const config = await prepareWriteContract({
+      address: depolyerTx.transactions[0].contractAddress,
+      abi: storeABI.abi,
+      functionName: "mintTo",
+      args: [address, `0x${hexstr}`],
+    });
+    const { hash, wait } = await writeContract(config);
+    setTxState("waiting for tx");
+    const receipt = await wait(1);
+    setTxState("done");
   };
+
+  if (txState) return <div>{txState}</div>;
+  if (error) return <div>failed to load</div>;
+  if (isLoading) return <div>loading...</div>;
 
   // render data
   return (
@@ -102,7 +96,7 @@ export default function Page({ params }: { params: { address: string } }) {
             );
           })}
         </div>
-        <button disabled={!write || isLoading}>
+        <button disabled={isLoading}>
           {isDisconnected
             ? "connect to Mint"
             : isLoading
