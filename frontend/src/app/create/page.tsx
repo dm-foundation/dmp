@@ -29,6 +29,8 @@ export default function Page({ params }: { params: { address: string } }) {
   });
 
   const storeRoot = contract.data ? hexHashToCid(contract.data) : false;
+  console.log("storeRoot");
+  console.log(storeRoot);
 
   // ipfs
   const { data, error, isLoading } = contract.data
@@ -126,5 +128,4 @@ export default function Page({ params }: { params: { address: string } }) {
       </form>
     </div>
   );
-  // return <h1>Hello, {params.address}</h1>;
 }

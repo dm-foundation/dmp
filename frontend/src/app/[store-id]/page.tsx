@@ -1,6 +1,7 @@
 "use client";
 import useSWR from "swr";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useContractRead } from "wagmi";
 import { hexHashToCid } from "../../lib/utils";
 
@@ -9,7 +10,7 @@ import depolyerTx from "../../../../contracts/broadcast/store-reg.s.sol/31337/ru
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
-export default function Page({ params }: { params: { storeId: string } }) {
+export default function Page({ params }: { params: { "store-id": string } }) {
   // fetch the store hash from the contract
   const contract = useContractRead({
     address: depolyerTx.transactions[0].contractAddress,
@@ -18,7 +19,7 @@ export default function Page({ params }: { params: { storeId: string } }) {
     args: ["0x" + params["store-id"]],
   });
 
-  const storeData = contract.data
+  const sd = contract.data
     ? useSWR(
         `http://${hexHashToCid(
           contract.data
@@ -27,33 +28,13 @@ export default function Page({ params }: { params: { storeId: string } }) {
       )
     : { isLoading: true };
 
-  if (storeData.error) return <div>failed to load</div>;
-  if (storeData.isLoading) return <div>loading...</div>;
+  if (sd.isLoading) return <div>loading...</div>;
   return (
     <div>
-      <h1>{params.storeId}</h1>
-      <h2> listings </h2>
-      <div className="grid grid-cols-4 gap-4">
-        {storeData.data.listings.map((item, index) => {
-          return (
-            <div key={`image-${index}`}>
-              <Image
-                src={`http://${rootHash}.ipfs.localhost:8080/${index}/picture`}
-                alt={item.description}
-                width={500}
-                height={500}
-                className="w-48 h-48 "
-                unoptimized
-              />
-              <p>{item.description}</p>
-              <p>Price: {item.price}</p>
-            </div>
-          );
-        })}
-      </div>
+      <h1>{params["store-id"]}</h1>
       <h2> Promotion </h2>
       <div className="grid grid-cols-4 gap-4">
-        {storeData.data.listings.map((item, index) => (
+        {sd.data.promoting.map((item, index) => (
           <StoreItem index={index} item={item} />
         ))}
       </div>
@@ -63,11 +44,38 @@ export default function Page({ params }: { params: { storeId: string } }) {
 
 // todo need to finish
 const StoreItem = (props) => {
+  console.log(props);
   const contract = useContractRead({
     address: depolyerTx.transactions[0].contractAddress,
     abi: storeABI.abi,
     functionName: "storeRootHash",
-    args: [props],
+    args: ["0x" + props.item.storeId],
   });
-  return <h1>{props.text}</h1>;
+
+  const sd = contract.data
+    ? useSWR(
+        `http://${hexHashToCid(
+          contract.data
+        )}.ipfs.localhost:8080/?format=dag-json`,
+        fetcher
+      )
+    : { isLoading: true };
+
+  if (sd.isLoading) return <div>loading...</div>;
+  return (
+    <div key={`image-${props.index}`}>
+      <Image
+        src={`http://${hexHashToCid(
+          contract.data
+        )}.ipfs.localhost:8080/listings/${props.item.index}/picture`}
+        alt={sd.data.listings[props.item.index].description}
+        width={500}
+        height={500}
+        className="w-48 h-48 "
+        unoptimized
+      />
+      <p>{sd.data.listings[props.item.index].description}</p>
+      <p>Price: {sd.data.listings[props.item.index].price}</p>
+    </div>
+  );
 };
