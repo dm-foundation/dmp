@@ -9,9 +9,9 @@ const contractsPath = new URL("../../contracts", import.meta.url);
 const anvil = spawn("anvil");
 connectIO(anvil, "anvil");
 // start the frontend
-process.chdir(frontendPath.pathname);
-const next = spawn("pnpm", ["dev"]);
-connectIO(next, "next");
+// process.chdir(frontendPath.pathname);
+// const next = spawn("pnpm", ["dev"]);
+// connectIO(next, "next");
 
 anvil.stdout.once("data", () => {
   process.chdir(contractsPath.pathname);
@@ -42,6 +42,6 @@ process.on("uncaughtException", function (e) {
   console.log(e.stack);
   // cleanup: kill running processes
   anvil.kill();
-  next.kill();
+  // next.kill();
   process.exit(99);
 });

@@ -39,10 +39,6 @@
             # frontend dependencies
             nodejs_latest
             nodePackages.pnpm
-            nodePackages.typescript
-            nodePackages.prettier
-            # for editor
-            nodePackages.typescript-language-server
           ];
 
           # Decorative prompt override so we know when we're in a dev shell

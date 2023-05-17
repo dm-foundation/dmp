@@ -1,6 +1,6 @@
 "use client";
 import useSWR from "swr";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePrepareContractWrite, useAccount, useContractRead } from "wagmi";
