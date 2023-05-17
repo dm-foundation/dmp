@@ -3,9 +3,9 @@ import useSWR from "swr";
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { usePrepareContractWrite, useAccount, useContractRead } from "wagmi";
+import { useAccount, useContractRead } from "wagmi";
 import { prepareWriteContract, writeContract } from "@wagmi/core";
-import { hexHashToCid } from "../../lib/utils";
+import { hexHashToCid, toHexString } from "../../lib/utils";
 import { create } from "kubo-rpc-client";
 import storeABI from "../../../../contracts/out/store-reg.sol/Store.json" assert { type: "json" };
 import depolyerTx from "../../../../contracts/broadcast/store-reg.s.sol/31337/run-latest.json" assert { type: "json" };
@@ -13,9 +13,6 @@ import depolyerTx from "../../../../contracts/broadcast/store-reg.s.sol/31337/ru
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 // connect to the default API address http://localhost:5001
 const kuboClient = create("http://127.0.0.1:5001");
-
-const toHexString = (arr) =>
-  Array.from(arr, (i) => i.toString(16).padStart(2, "0")).join("");
 
 export default function Page({ params }: { params: { address: string } }) {
   const router = useRouter();
@@ -63,6 +60,7 @@ export default function Page({ params }: { params: { address: string } }) {
       promoting: data,
       listings: [],
     });
+
     console.log(cid);
     // create a random store id
     const storeId = new Uint8Array(32);

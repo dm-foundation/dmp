@@ -1,5 +1,5 @@
 import { Providers } from "./providers";
-import Profile from "../components/profile";
+import Profile from "../components/Profile";
 
 export const metadata = {
   title: "wagmi",
