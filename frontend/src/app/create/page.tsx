@@ -1,129 +1,158 @@
 "use client";
-import useSWR from "swr";
 import { useState } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useAccount, useContractRead } from "wagmi";
-import { prepareWriteContract, writeContract } from "@wagmi/core";
-import { hexHashToCid, toHexString } from "../../lib/utils";
-import { create } from "kubo-rpc-client";
-import storeABI from "../../../../contracts/out/store-reg.sol/Store.json" assert { type: "json" };
-import depolyerTx from "../../../../contracts/broadcast/store-reg.s.sol/31337/run-latest.json" assert { type: "json" };
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
-// connect to the default API address http://localhost:5001
-const kuboClient = create("http://127.0.0.1:5001");
+type AddProductFn = (
+  title: string,
+  description: string,
+  images: Set<string>
+) => void;
 
-export default function Page({ params }: { params: { address: string } }) {
-  const router = useRouter();
-  const [txState, setTxState] = useState(false);
+interface Product {
+  readonly name: string;
+  readonly description: string;
+  readonly images: Set<string>;
+}
 
-  const contract = useContractRead({
-    address: depolyerTx.transactions[0].contractAddress,
-    abi: storeABI.abi,
-    functionName: "storeRootHash",
-    args: ["0x0"],
-  });
+export default function CreateStore() {
+  const [products, setProducts] = useState(new Set() as Set<Product>);
 
-  const storeRoot = contract.data ? hexHashToCid(contract.data) : false;
-  console.log("storeRoot");
-  console.log(storeRoot);
-
-  // ipfs
-  const { data, error, isLoading } = contract.data
-    ? useSWR(
-        `http://${storeRoot}.ipfs.localhost:8080/?format=dag-json`,
-        fetcher
-      )
-    : { isLoading: true };
-
-  // smart contract
-  const { address, isConnectingContract, isDisconnected } = useAccount();
-
-  const handleSubmit = async (event) => {
-    // Stop the form from submitting and refreshing the page.
-    event.preventDefault();
-    const checked = document.querySelectorAll(":checked");
-
-    // Get data from the form.
-    const data = Array.from(checked).map((item) => {
-      return {
-        index: item.getAttribute("data-index"),
-        storeId: item.getAttribute("data-storeid"),
-      };
+  const addProduct: AddProductFn = function (name, description, images) {
+    products.add({
+      name,
+      description,
+      images,
     });
-
-    // Send the data to the server in JSON format.
-    console.log("data data to ipfs");
-
-    const cid = await kuboClient.dag.put({
-      promoting: data,
-      listings: [],
-    });
-
-    console.log(cid);
-    // create a random store id
-    const storeId = new Uint8Array(32);
-    // load cryptographically random bytes into array
-    window.crypto.getRandomValues(storeId);
-
-    const config = await prepareWriteContract({
-      address: depolyerTx.transactions[0].contractAddress,
-      abi: storeABI.abi,
-      functionName: "mintTo",
-      args: [address, storeId, cid.multihash.digest],
-    });
-    const { hash, wait } = await writeContract(config);
-    // todo pending actions
-    setTxState("waiting for tx");
-    const receipt = await wait(1);
-    setTxState("done");
-    router.push(toHexString(storeId));
+    setProducts(new Set(products));
   };
 
-  if (txState) return <div>{txState}</div>;
-  if (error) return <div>failed to load</div>;
-  if (isLoading) return <div>loading...</div>;
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-  // render data
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const { name, description } = Object.fromEntries(formData.entries());
+    form.reset();
+  }
+
+
   return (
-    <div>
+    <>
       <h1>Create A Store</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-4 gap-4">
-          {data.listings.map((item, index) => {
-            return (
-              <div key={`image-${index}`}>
-                <Image
-                  src={`http://${storeRoot}.ipfs.localhost:8080/listings/${index}/picture`}
-                  alt={item.description}
-                  width={500}
-                  height={500}
-                  className="w-48 h-48 "
-                  unoptimized
-                />
-                <p>{item.description}</p>
-                <p>Price: {item.price}</p>
-                <label>
-                  Select
-                  <input
-                    type="checkbox"
-                    data-index={index}
-                    data-storeid="0" // todo
-                  />
-                </label>
-              </div>
-            );
-          })}
-        </div>
-        <button disabled={isLoading}>
-          {isDisconnected
-            ? "connect to Mint"
-            : isLoading
-            ? "Minting..."
-            : "Mint Store"}
-        </button>
+      <form id="storeForm" onSubmit={handleSubmit}>
+        <label>
+          Name
+          <input id="storeName" type="text" required />
+        </label>
+        <br />
+        <label>
+          Description
+          <textarea id="storeDescription" />
+        </label>
+        <br />
       </form>
-    </div>
+      <AddProduct addProduct={addProduct} />
+
+      <input type="submit" form="storeForm" value="create store" />
+      <ListOfProducts products={products} setProducts={setProducts} />
+    </>
   );
+}
+
+function AddProduct({ addProduct }: { addProduct: AddProductFn }) {
+  const [images, setImages] = useState(new Set() as Set<string>);
+
+  function displayImage(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) {
+      const file = URL.createObjectURL(e.target.files[0]);
+      images.add(file);
+      setImages(new Set(images));
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const { name, description } = Object.fromEntries(formData.entries());
+    addProduct(name as string, description as string, new Set(images));
+    setImages(new Set());
+    form.reset();
+  }
+
+  return (
+    <>
+      <h2>Add Products</h2>
+      <form method="post" onSubmit={handleSubmit}>
+        <label>
+          Product Name
+          <input name="name" type="text" required />
+        </label>
+        <br />
+        <label>
+          Product Description
+          <textarea name="description" required />
+        </label>
+        <br />
+        <label>
+          add image
+          <input type="file" accept="image/*" onChange={displayImage} />
+        </label>
+        <br />
+        <button type="submit">Add Product</button>
+      </form>
+      <ListOfImages images={images} setImages={setImages} />
+    </>
+  );
+}
+
+function ListOfImages({
+  images,
+  setImages,
+}: {
+  images: Set<string>;
+  setImages: (a: Set<string>) => void;
+}) {
+  function handleRemove(id: string) {
+    images.delete(id);
+    setImages(new Set(images));
+  }
+  const listofImages = [...images].map((img, idx: number) => {
+    return (
+      <li key={idx}>
+        <img alt="todo" src={img} />
+        <button type="button" onClick={() => handleRemove(img)}>
+          Remove
+        </button>
+      </li>
+    );
+  });
+  return <ul>{listofImages}</ul>;
+}
+
+function ListOfProducts({
+  products,
+  setProducts,
+}: {
+  products: Set<Product>;
+  setProducts: (a: Set<Product>) => void;
+}) {
+  function handleRemove(product: Product) {
+    products.delete(product);
+    setProducts(new Set(products));
+  }
+
+  const liItems = [...products].map((product: Product, idx: number) => {
+    return (
+      <li key={idx}>
+        {product.name}
+        <button type="button" onClick={() => handleRemove(product)}>
+          Remove
+        </button>
+      </li>
+    );
+  });
+  return <ul>{liItems}</ul>;
 }
