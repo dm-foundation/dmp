@@ -36,6 +36,7 @@
             kubo
             foundry-bin
             solc
+            nostr-rs-relay
             # frontend dependencies
             nodejs_latest
             nodePackages.pnpm
