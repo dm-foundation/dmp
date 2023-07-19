@@ -1,28 +1,35 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
+import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+
+contract NFTItem is ERC721 {
+    address owner = msg.sender;
+    mapping(uint256 => bytes32) public listings;
+    constructor() ERC721("MassItem", "MT") {}
+    function mint(address nftOwner, uint256 id, bytes32 listing) public {
+        require(owner == msg.sender);
+        _mint(nftOwner, id);
+        listings[id] = listing;
+    }
+}
 
 contract SweepEtherPayment {
     constructor (
         address payable merchant,
         uint256 amount,
-        address payable proof,
-        uint escrowPeriod
+        address payable proof
     ) payable {
-        require(block.number > escrowPeriod);
         uint256 balance = address(this).balance;
         // not enough was sent so return what we have
         if (balance < amount) {
             proof.transfer(balance);
-            assembly {
-                stop()
+        } else {
+            if (balance > amount) {
+                // to much was sent so send the over payed amount back
+                proof.transfer(balance - amount);
             }
-            // not enought was sent, return to buyer
-        } else if (balance > amount) {
-            // to much was sent so send the over payed amount back
-            proof.transfer(balance - amount);
+            // pay the mechant
+            merchant.transfer(amount);
         }
-        // pay the mechant
-        merchant.transfer(amount);
         // need to prevent solidity from returning code
         assembly {
             stop()
@@ -31,18 +38,26 @@ contract SweepEtherPayment {
 }
 
 contract PaymentFactory {
-  event Purchase(address indexed customer, bytes32 indexed _listing);
-  event Refund(address indexed customer, bytes32 indexed _listing);
+  NFTItem Items = new NFTItem();
 
   function processPayment(
-      address merchant,
+      address payable merchant,
       address currency,
       uint256 amount,
       bytes32 listing,
-      address proof,
+      address payable proof,
       bytes32 salt // sender + nonce?
   ) public {
-    new SweepEtherPayment{salt: salt}(merchant, amount);
+      SweepEtherPayment paymentContract;
+      // if we are dealing with ether
+      if (currency == address(0)) {
+        paymentContract  = new SweepEtherPayment{salt: salt}(merchant, amount, proof);
+      } else {
+        // if we are dealing with an ERC20
+      }
+      // Create a reciept
+      bytes32 hash = keccak256(abi.encodePacked(block.number, address(paymentContract)));
+      Items.mint(proof, uint256(hash), listing);
   }
 
   function processRefund(
@@ -61,5 +76,4 @@ contract PaymentFactory {
       uint256 amount,
       bytes32 listing
   ) external {}
-
 }
