@@ -80,21 +80,20 @@ contract PaymentFactory {
       address payable merchant,
       address currency,
       uint256 amount,
-      bytes32 listing,
-      address payable proof,
-      bytes32 salt // sender + nonce?
+      bytes32 recieptHash,
+      address payable proof
   ) public {
       address paymentContract;
       // if we are dealing with ether
       if (currency == address(0)) {
-        paymentContract  = address(new SweepEtherPayment{salt: salt}(merchant, amount, proof, address(this)));
+        paymentContract  = address(new SweepEtherPayment{salt: recieptHash}(merchant, amount, proof, address(this)));
       } else {
         // if we are dealing with an ERC20
-        paymentContract  = address(new SweepERC20Payment{salt: salt}(merchant, amount, proof, ERC20(currency), address(this)));
+        paymentContract  = address(new SweepERC20Payment{salt: recieptHash}(merchant, amount, proof, ERC20(currency), address(this)));
       }
       // Create a reciept
       bytes32 hash = keccak256(abi.encodePacked(block.number, paymentContract));
-      Items.mint(proof, uint256(hash), listing);
+      Items.mint(proof, uint256(hash), recieptHash);
   }
 
   function batch(
@@ -102,11 +101,10 @@ contract PaymentFactory {
       address[] calldata currency,
       uint256[] calldata amount,
       bytes32[] calldata listing,
-      address payable[] calldata proof,
-      bytes32[] calldata salt // sender + nonce?
+      address payable[] calldata proof
   ) public {
      for (uint i=0; i<merchant.length; i++) {
-         processPayment(merchant[i], currency[i], amount[i], listing[i], proof[i], salt[i]);
+         processPayment(merchant[i], currency[i], amount[i], listing[i], proof[i]);
      }
   }
 
