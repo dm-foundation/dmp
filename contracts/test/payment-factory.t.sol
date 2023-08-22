@@ -9,11 +9,11 @@ contract Payments is Test {
     PaymentFactory private factory;
     address generatedAddress;
 
-    address payable merchant = payable(address(1));
+    address payable merchant = payable(address(21));
     address currency = address(0);
     uint256 amount   = 5;
     bytes32 recieptHash = 0x5049705e4c047d2cfeb1050cffe847c85a8dbd96e7f129a3a1007920d9c61d9a; 
-    address payable proof  = payable(address(3));
+    address payable proof  = payable(address(23));
 
     function setUp() public {
         factory = new PaymentFactory();
@@ -35,7 +35,6 @@ contract Payments is Test {
             recieptHash,
             proof
         );
-        console.log(merchant.balance);
-        console.log(generatedAddress.balance);
+        assertEq(merchant.balance, amount, "the payout contract should send the corret amount");
     }
 }

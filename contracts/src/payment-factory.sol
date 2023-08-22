@@ -18,7 +18,7 @@ contract NFTItem is ERC721 {
 }
 
 
-contract SweepERC20Payment {
+contract SweepPayment {
     constructor (
         address payable merchant,
         uint256 amount,
@@ -27,44 +27,32 @@ contract SweepERC20Payment {
         address factory
     ) payable {
         require(msg.sender == factory);
-        uint256 balance = erc20.balanceOf(address(this));
-        // not enough was sent so return what we have
-        if (balance < amount) {
-            erc20.transfer(proof, balance);
-        } else {
-            if (balance > amount) {
-                // to much was sent so send the over payed amount back
-                erc20.transfer(proof, balance - amount);
+        // if we are transfering ether
+        if (address(erc20) == address(0)) {
+             uint256 balance = address(this).balance;
+            if (balance < amount) {
+                proof.transfer(balance);
+            } else {
+                if (balance > amount) {
+                    // to much was sent so send the over payed amount back
+                    proof.transfer(balance - amount);
+                }
+                // pay the mechant
+                merchant.transfer(amount);
             }
-            // pay the mechant
-            erc20.transfer(merchant, amount);
-        }
-        // need to prevent solidity from returning code
-        assembly {
-            stop()
-        }
-    }
-}
-
-contract SweepEtherPayment {
-    constructor (
-        address payable merchant,
-        uint256 amount,
-        address payable proof,
-        address factory
-    ) payable {
-        require(msg.sender == factory);
-        uint256 balance = address(this).balance;
-        // not enough was sent so return what we have
-        if (balance < amount) {
-            proof.transfer(balance);
         } else {
-            if (balance > amount) {
-                // to much was sent so send the over payed amount back
-                proof.transfer(balance - amount);
+            uint256 balance = erc20.balanceOf(address(this));
+            // not enough was sent so return what we have
+            if (balance < amount) {
+                erc20.transfer(proof, balance);
+            } else {
+                if (balance > amount) {
+                    // to much was sent so send the over payed amount back
+                    erc20.transfer(proof, balance - amount);
+                }
+                // pay the mechant
+                erc20.transfer(merchant, amount);
             }
-            // pay the mechant
-            merchant.transfer(amount);
         }
         // need to prevent solidity from returning code
         assembly {
@@ -82,7 +70,7 @@ contract PaymentFactory {
       uint256 amount,
       address  proof
     ) public view returns (bytes memory) {
-        bytes memory bytecode = type(SweepERC20Payment).creationCode;
+        bytes memory bytecode = type(SweepPayment).creationCode;
         return abi.encodePacked(bytecode, abi.encode(merchant, amount, proof, currency, address(this)));
     }
 
@@ -118,12 +106,7 @@ contract PaymentFactory {
     ) public {
         address paymentContract;
         // if we are dealing with ether
-        if (currency == address(0)) {
-            paymentContract  = address(new SweepEtherPayment{salt: recieptHash}(merchant, amount, proof, address(this)));
-        } else {
-            // if we are dealing with an ERC20
-            paymentContract  = address(new SweepERC20Payment{salt: recieptHash}(merchant, amount, proof, ERC20(currency), address(this)));
-        }
+        paymentContract  = address(new SweepPayment{salt: recieptHash}(merchant, amount, proof, ERC20(currency), address(this)));
         // Create a reciept
         bytes32 hash = keccak256(abi.encodePacked(block.number, paymentContract));
         Items.mint(proof, uint256(hash), recieptHash);
