@@ -24,10 +24,10 @@ contract Payments is Test {
             recieptHash,
             proof
         );
-        deal(generatedAddress, amount);
     }
 
     function test_ProcessPayment() public {
+        deal(generatedAddress, amount);
         factory.processPayment(
             merchant,
             currency,
@@ -35,6 +35,34 @@ contract Payments is Test {
             recieptHash,
             proof
         );
+        assertEq(merchant.balance, amount, "the payout contract should send the corret amount");
+    }
+
+    function test_UnderPayment() public {
+        deal(generatedAddress, amount - 1);
+        factory.processPayment(
+            merchant,
+            currency,
+            amount,
+            recieptHash,
+            proof
+        );
+        assertEq(proof.balance, amount - 1, "the payout contract should return the ether if not enought was payed");
+    }
+
+    function test_OverPayment() public {
+        deal(generatedAddress, amount + 1);
+        deal(proof, 0);
+        deal(merchant, 0);
+
+        factory.processPayment(
+            merchant,
+            currency,
+            amount,
+            recieptHash,
+            proof
+        );
+        assertEq(proof.balance, 1 , "the payout contract should return the ether if not enought was payed");
         assertEq(merchant.balance, amount, "the payout contract should send the corret amount");
     }
 }
