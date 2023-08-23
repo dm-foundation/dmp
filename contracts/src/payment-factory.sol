@@ -2,7 +2,7 @@ pragma solidity ^0.8.19;
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-contract NFTItem is ERC721 {
+contract NFTReceipt is ERC721 {
     address owner = msg.sender;
     mapping(uint256 => bytes32) public listings;
     constructor() ERC721("MassItem", "MT") {}
@@ -29,7 +29,7 @@ contract SweepPayment {
         require(msg.sender == factory);
         // if we are transfering ether
         if (address(erc20) == address(0)) {
-             uint256 balance = address(this).balance;
+            uint256 balance = address(this).balance;
             if (balance < amount) {
                 proof.transfer(balance);
             } else {
@@ -39,6 +39,7 @@ contract SweepPayment {
                 }
                 // pay the mechant
                 merchant.transfer(amount);
+                PaymentFactory(msg.sender).markSuccussfulTransfer();
             }
         } else {
             uint256 balance = erc20.balanceOf(address(this));
@@ -52,6 +53,7 @@ contract SweepPayment {
                 }
                 // pay the mechant
                 erc20.transfer(merchant, amount);
+                PaymentFactory(msg.sender).markSuccussfulTransfer();
             }
         }
         // need to prevent solidity from returning code
@@ -62,13 +64,14 @@ contract SweepPayment {
 }
 
 contract PaymentFactory {
-  NFTItem Items = new NFTItem();
+    NFTReceipt Receipt = new NFTReceipt();
+    address lastPaymentAddress;
 
     function getBytecode(
-      address  merchant,
-      address currency,
-      uint256 amount,
-      address  proof
+        address  merchant,
+        address currency,
+        uint256 amount,
+        address  proof
     ) public view returns (bytes memory) {
         bytes memory bytecode = type(SweepPayment).creationCode;
         return abi.encodePacked(bytecode, abi.encode(merchant, amount, proof, currency, address(this)));
@@ -108,8 +111,14 @@ contract PaymentFactory {
         // if we are dealing with ether
         paymentContract  = address(new SweepPayment{salt: recieptHash}(merchant, amount, proof, ERC20(currency), address(this)));
         // Create a reciept
-        bytes32 hash = keccak256(abi.encodePacked(block.number, paymentContract));
-        Items.mint(proof, uint256(hash), recieptHash);
+        if (lastPaymentAddress == paymentContract) {
+            bytes32 hash = keccak256(abi.encodePacked(block.number, paymentContract));
+            Receipt.mint(proof, uint256(hash), recieptHash);
+        }
+    }
+
+    function markSuccussfulTransfer () public {
+        lastPaymentAddress = msg.sender;
     }
 
     function batch(
