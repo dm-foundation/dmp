@@ -17,44 +17,56 @@ contract NFTReceipt is ERC721 {
     }
 }
 
-
-contract SweepPayment {
+contract SweepERC20Payment {
     constructor (
         address payable merchant,
-        uint256 amount,
         address payable proof,
+        uint256 amount,
         ERC20 erc20,
         address factory
     ) payable {
         require(msg.sender == factory);
         // if we are transfering ether
-        if (address(erc20) == address(0)) {
-            uint256 balance = address(this).balance;
-            if (balance < amount) {
-                proof.transfer(balance);
-            } else {
-                if (balance > amount) {
-                    // to much was sent so send the over payed amount back
-                    proof.transfer(balance - amount);
-                }
-                // pay the mechant
-                merchant.transfer(amount);
-                PaymentFactory(msg.sender).markSuccussfulTransfer();
-            }
+        uint256 balance = erc20.balanceOf(address(this));
+        // not enough was sent so return what we have
+        if (balance < amount) {
+            erc20.transfer(proof, balance);
         } else {
-            uint256 balance = erc20.balanceOf(address(this));
-            // not enough was sent so return what we have
-            if (balance < amount) {
-                erc20.transfer(proof, balance);
-            } else {
-                if (balance > amount) {
-                    // to much was sent so send the over payed amount back
-                    erc20.transfer(proof, balance - amount);
-                }
-                // pay the mechant
-                erc20.transfer(merchant, amount);
-                PaymentFactory(msg.sender).markSuccussfulTransfer();
+            if (balance > amount) {
+                // to much was sent so send the over payed amount back
+                erc20.transfer(proof, balance - amount);
             }
+            // pay the mechant
+            erc20.transfer(merchant, amount);
+            PaymentFactory(msg.sender).markSuccussfulTransfer();
+        }
+        // need to prevent solidity from returning code
+        assembly {
+            stop()
+        }
+    }
+}
+
+contract SweepEtherPayment {
+    constructor (
+        address payable merchant,
+        address payable proof,
+        uint256 amount,
+        address factory
+    ) payable {
+        require(msg.sender == factory);
+        // if we are transfering ether
+        uint256 balance = address(this).balance;
+        if (balance < amount) {
+            proof.transfer(balance);
+        } else {
+            if (balance > amount) {
+                // to much was sent so send the over payed amount back
+                proof.transfer(balance - amount);
+            }
+            // pay the mechant
+            merchant.transfer(amount);
+            PaymentFactory(msg.sender).markSuccussfulTransfer();
         }
         // need to prevent solidity from returning code
         assembly {
@@ -68,21 +80,27 @@ contract PaymentFactory {
     address lastPaymentAddress;
 
     function getBytecode(
-        address  merchant,
-        address currency,
+        address merchant,
+        address proof,
         uint256 amount,
-        address  proof
+        address currency
     ) public view returns (bytes memory) {
-        bytes memory bytecode = type(SweepPayment).creationCode;
-        return abi.encodePacked(bytecode, abi.encode(merchant, amount, proof, currency, address(this)));
+        bytes memory bytecode;
+        if (currency == address(0)) {
+            bytecode = type(SweepEtherPayment).creationCode;
+            return abi.encodePacked(bytecode, abi.encode(merchant, proof, amount, address(this)));
+        } else {
+            bytecode = type(SweepERC20Payment).creationCode;
+            return abi.encodePacked(bytecode, abi.encode(merchant, proof, amount, currency, address(this)));
+        }
     }
 
     function calcuatePaymentAddress(
         address merchant,
-        address currency,
+        address proof,
         uint256 amount,
-        bytes32 recieptHash,
-        address proof
+        address currency,
+        bytes32 recieptHash
     ) public view returns (address)  {
         bytes32 hash = keccak256(
             abi.encodePacked(bytes1(0xff),
@@ -91,9 +109,9 @@ contract PaymentFactory {
                              keccak256(
                                  getBytecode(
                                      merchant, 
-                                     currency,
+                                     proof, 
                                      amount,
-                                     proof 
+                                     currency
                              ))));
 
                              // NOTE: cast last 20 bytes of hash to address
@@ -102,14 +120,18 @@ contract PaymentFactory {
 
     function processPayment(
         address payable merchant,
-        address currency,
+        address payable proof,
         uint256 amount,
-        bytes32 recieptHash,
-        address payable proof
+        address currency,
+        bytes32 recieptHash
     ) public {
         address paymentContract;
         // if we are dealing with ether
-        paymentContract  = address(new SweepPayment{salt: recieptHash}(merchant, amount, proof, ERC20(currency), address(this)));
+        if (currency == address(0)) {
+            paymentContract  = address(new SweepEtherPayment{salt: recieptHash}(merchant, proof, amount, address(this)));
+        } else {
+            paymentContract  = address(new SweepERC20Payment{salt: recieptHash}(merchant, proof, amount, ERC20(currency), address(this)));
+        }
         // Create a reciept
         if (lastPaymentAddress == paymentContract) {
             bytes32 hash = keccak256(abi.encodePacked(block.number, paymentContract));
@@ -122,23 +144,22 @@ contract PaymentFactory {
     }
 
     function batch(
-        address payable[] calldata merchant,
-        address[] calldata currency,
-        uint256[] calldata amount,
-        bytes32[] calldata listing,
-        address payable[] calldata proof
+        address payable[] calldata merchants,
+        address payable[] calldata proofs,
+        uint256[] calldata amounts,
+        address[] calldata currencys,
+        bytes32[] calldata recieptHashes
     ) public {
-        for (uint i=0; i<merchant.length; i++) {
-            processPayment(merchant[i], currency[i], amount[i], listing[i], proof[i]);
+        for (uint i=0; i<merchants.length; i++) {
+            processPayment(merchants[i], proofs[i], amounts[i], currencys[i], recieptHashes[i]);
         }
     }
 
     function processRefund(
         address merchant,
-        address currency,
-        bytes32 listing,
         address proof,
-        bytes32 salt // sender + nonce?
+        address currency,
+        bytes32 listing
     ) public {
 
     }

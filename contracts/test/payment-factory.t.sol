@@ -12,6 +12,7 @@ contract Payments is Test {
     address payable merchant = payable(address(21));
     address currency = address(0);
     uint256 amount   = 5;
+    // just a random hash
     bytes32 recieptHash = 0x5049705e4c047d2cfeb1050cffe847c85a8dbd96e7f129a3a1007920d9c61d9a; 
     address payable proof  = payable(address(23));
 
@@ -19,10 +20,10 @@ contract Payments is Test {
         factory = new PaymentFactory();
         generatedAddress = factory.calcuatePaymentAddress(
             merchant,
-            currency,
+            proof,
             amount,
-            recieptHash,
-            proof
+            currency,
+            recieptHash
         );
     }
 
@@ -30,10 +31,10 @@ contract Payments is Test {
         deal(generatedAddress, amount);
         factory.processPayment(
             merchant,
-            currency,
+            proof,
             amount,
-            recieptHash,
-            proof
+            currency,
+            recieptHash
         );
         assertEq(merchant.balance, amount, "the payout contract should send the corret amount");
     }
@@ -42,10 +43,10 @@ contract Payments is Test {
         deal(generatedAddress, amount - 1);
         factory.processPayment(
             merchant,
-            currency,
+            proof,
             amount,
-            recieptHash,
-            proof
+            currency,
+            recieptHash
         );
         assertEq(proof.balance, amount - 1, "the payout contract should return the ether if not enought was payed");
     }
@@ -57,10 +58,10 @@ contract Payments is Test {
 
         factory.processPayment(
             merchant,
-            currency,
+            proof,
             amount,
-            recieptHash,
-            proof
+            currency,
+            recieptHash
         );
         assertEq(proof.balance, 1 , "the payout contract should return the ether if not enought was payed");
         assertEq(merchant.balance, amount, "the payout contract should send the corret amount");
