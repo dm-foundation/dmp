@@ -2,14 +2,18 @@ pragma solidity ^0.8.19;
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
+/// @title an ERC721 instance used for storing receipts from purchases
+/// @dev this is does more then it needs to. We only need to store a mapping of owner=>Array(reciepts).
+/// and we don't need a full ECR721 implemention. There should be seperate mechinism that allows a user
+/// to redem an NFT for a giving listing that existed in their reciept.
 contract NFTReceipt is ERC721 {
     address owner = msg.sender;
-    mapping(uint256 => bytes32) public listings;
+    mapping(uint256 => bytes32) public receipts;
     constructor() ERC721("MassItem", "MT") {}
-    function mint(address nftOwner, uint256 id, bytes32 listing) public {
+    function mint(address nftOwner, uint256 id, bytes32 receipt) public {
         require(owner == msg.sender);
         _mint(nftOwner, id);
-        listings[id] = listing;
+        receipts[id] = receipt;
     }
     function burn(uint256 id) public {
         require(owner == msg.sender);
@@ -17,6 +21,7 @@ contract NFTReceipt is ERC721 {
     }
 }
 
+/// @title Sweeps ERC20's from the payment address to the merchants address
 contract SweepERC20Payment {
     constructor (
         address payable merchant,
@@ -47,6 +52,7 @@ contract SweepERC20Payment {
     }
 }
 
+/// @title Sweeps ether from the payment address to the merchants address
 contract SweepEtherPayment {
     constructor (
         address payable merchant,
@@ -54,6 +60,8 @@ contract SweepEtherPayment {
         uint256 amount,
         address factory
     ) payable {
+        // we need to commit to the factory or anyone could deploy this sweep contracts
+        // commiting allows the reciepts to have a single souce of truth
         require(msg.sender == factory);
         // if we are transfering ether
         uint256 balance = address(this).balance;
@@ -75,6 +83,7 @@ contract SweepEtherPayment {
     }
 }
 
+/// @title Provides functions around payments addresses
 contract PaymentFactory {
     NFTReceipt Receipt = new NFTReceipt();
     address lastPaymentAddress;
@@ -95,6 +104,8 @@ contract PaymentFactory {
         }
     }
 
+
+    /// @dev Calulates the payament address given the following parameters
     function calcuatePaymentAddress(
         address merchant,
         address proof,
@@ -118,6 +129,8 @@ contract PaymentFactory {
                              return address(uint160(uint(hash)));
     }
 
+
+    /// @dev Calulates the payament address given the following parameters
     function processPayment(
         address payable merchant,
         address payable proof,
